@@ -85,3 +85,11 @@
     owner: "{{ wiki.user }}"
     group: "{{ wiki.user }}"
     mode: 0755
+
+- name: Restart maridb and httpd
+  action: shell systemctl restart httpd && systemctl restart mariadb
+ 
+
+- name: Enable mariadb and httpd
+  action: shell systemctl enable httpd && systemctl enable mariadb
+
