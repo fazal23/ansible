@@ -1,0 +1,87 @@
+---
+
+- name: run command 
+  action: shell  rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+  become: yes
+- name: run command for php
+  action: shell rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
+  become: yes
+- name: Install dependencies
+  yum: name={{ item }} state=present
+  with_items:
+    - httpd
+    - mariadb
+    - mariadb-server
+    - mod_php71w
+    - php71w-cli
+    - php71w-common
+    - php71w-gd
+    - php71w-mbstring 
+    - php71w-mcrypt
+    - php71w-mysqlnd
+    - php71w-xml
+    - ImageMagick-perl
+    - texlive
+    - wget
+    - libselinux-python
+- name: Download MediaWiki
+  get_url:
+    url: http://releases.wikimedia.org/mediawiki/1.22/mediawiki-1.22.3.tar.gz
+    dest: /usr/local/src
+    remote_src: True
+
+- name: Unarchive MediaWiki
+  unarchive:
+    src: /usr/local/src/mediawiki-1.22.3.tar.gz
+    dest: /usr/local/src
+    owner: "{{ wiki.user }}"
+    group: "{{ wiki.user }}"
+    remote_src: True
+
+- name: Moving MediaWiki to web directory
+  command: creates={{ wiki.install_path }} mv /usr/local/src/mediawiki-1.22.3/ {{ wiki.install_path }}
+
+
+#- name: Setting up /wiki endpoint and securing wiki from IP address scanning
+#  template:
+#    src: wiki.conf.j2
+#    dest: /etc/httpd/conf.d/wiki.conf
+#    owner: "{{ wiki.user }}"
+#    group: "{{ wiki.user }}"
+#    mode: 0664
+
+#- name: Configuring MediaWiki
+#  template:
+#    src: LocalSettings.php.j2
+#    dest: "{{ wiki.install_path }}/LocalSettings.php"
+#    owner: "{{ wiki.user }}"
+#    group: "{{ wiki.user }}"
+#    mode: 0644
+
+#- name: Copy custom image file for the logo image
+#  copy:
+#    src: "{{ wiki.logo.source_path }}"
+#    dest: "{{ wiki.install_path }}/{{ wiki.logo.path }}"
+#    owner: "{{ wiki.user }}"
+#    group: "{{ wiki.user }}"
+#    mode: 0644
+#  when: wiki.logo.copy_custom_file
+
+- name: Updating permissions on MediaWiki installation parent directory
+  file:
+    path: "{{ wiki.install_path }}"
+    state: directory
+    recurse: yes
+    owner: "{{ wiki.user }}"
+    group: "{{ wiki.user }}"
+    
+    
+
+- name: Updating permissions on MediaWiki installation
+  file:
+    path: "{{ wiki.install_path }}"
+    state: directory
+    recurse: yes
+    owner: "{{ wiki.user }}"
+    group: "{{ wiki.user }}"
+    mode: 0755
